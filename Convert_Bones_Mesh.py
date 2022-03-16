@@ -59,8 +59,19 @@ def set_head_tail_postition(bone_name, head_position, tail_position):
     bones[bone_name].tail = (tail_position[0], tail_position [1], tail_position[2])
     return 
 
-
-
+# Method: transform_mesh(mesh_name, bone_name, head_position, tail_position)
+# Description: Merge the needed steps into one routine
+# Parameters:
+#    mesh_name: The mesh to access
+#    bone_name: The bone to rotate
+#    head_position: Array that contains 3D coordinates of head
+#    tail_position: Array that contains 3D coordinates of tail
+# Returns: Mesh 3D vertices and its coordinates
+def transform_mesh(mesh_name, bone_name, head_position, tail_position):
+    set_head_tail_postition(bone_name, head_position, tail-position)
+    mesh_vertices = get_vertices_mesh(mesh_name)
+    return mesh_vertices
+    
 # ---------------------------------------------------------------------------------------------------------------------------
 #Testing how to access MESH vertices
 print(get_vertices_mesh('Cylinder'))
@@ -89,4 +100,3 @@ set_rotation('Bone', 100,'X')
     # Deformed feature points (3D coordinates of corresponding vertices) 
 # Description: 
     # The function calculates the mesh of the deformed model based on the joint parameters. It will be used in the optimization loop. 
-
