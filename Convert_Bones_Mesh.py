@@ -3,7 +3,7 @@ from bpy import context
 import numpy as np
 
 
-# Method: set_rotation(bone, rotation_angle, rotation_axis)"
+# Method: "set_rotation(bone, rotation_angle, rotation_axis)"
 # Description: Alter the rotation of bone over one axis.
 # Parameters:
 #    bone_name: The bone to rotate
@@ -18,7 +18,7 @@ def set_rotation(bone_name, rotation_angle, rotation_axis):
     #bone.rotation_euler.rotate_axis(rotation_axis, math.radians(rotation_angle))
     return
 
-# Method: get_matrix_bone(bone)"
+# Method: "get_matrix_bone(bone)"
 # Description: Get the matrix of properties including bone location, scale and rotation
 # Parameter:
 #    bone: The bone to search 
@@ -49,7 +49,7 @@ def get_vertices_mesh(object_name):
     return vert_array
 
 
-# Method: transform_mesh(mesh_name, bone_name, head_position, tail_position)
+# Method: "transform_mesh(mesh_name, bones_array, angles_array)"
 # Description: Merge the needed steps into one routine
 # Parameters:
 #    mesh_name: The mesh to access
@@ -61,6 +61,13 @@ def transform_mesh(mesh_name, bones_array, angles_array): # THINK IN FUTURE ABOU
     mesh_vertices = get_vertices_mesh(mesh_name)
     return mesh_vertices
 
+# Method: "set_bones(mesh_name, bones_array, angles_array)"
+# Description: Traverses through the bone array to set the rotations (transform) for each bone
+# Parameters:
+#    mesh_name: The mesh to access
+#    bones_array: Array that contains the bone names to be changed 
+#    angles_array: Array that contains the new angles for the bones
+# Returns: None
 def set_bones(mesh_name, bones_array, angles_array):
     bpy.ops.object.mode_set(mode='POSE')
     angle_index=0
@@ -71,23 +78,10 @@ def set_bones(mesh_name, bones_array, angles_array):
     
     
 # ---------------------------------------------------------------------------------------------------------------------------
-#Testing how to access MESH vertices
-#print(get_vertices_mesh('Cylinder'))
-
-# Testing how to access Armature matrices
-#print(get_matrix_bone('Bone.001'))
-#print(get_matrix_bone('Bone'))
-#print(get_matrix_bone('Bone.002'))
-
-# Testing rotation of bone
-#set_rotation('Bone', 10,'X')
-#get_matrix_bone('Bone')
-
 array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
 array_of_angles = [10, 45, 10, 10, 10]
 transform_mesh('Cylinder', array_of_bone, array_of_angles)
-
-
+# ---------------------------------------------------------------------------------------------------------------------------
 
 
 
