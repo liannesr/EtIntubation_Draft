@@ -1,5 +1,7 @@
 import bpy, os, bmesh, math, mathutils
 from bpy import context
+import numpy as np
+
 
 # Method: set_rotation(bone, rotation_angle, rotation_axis)"
 # Description: Alter the rotation of bone over one axis.
@@ -9,10 +11,12 @@ from bpy import context
 #    rotation_axis: The roation axis
 # Returns: The matrix inserted into the bone
 def set_rotation(bone_name, rotation_angle, rotation_axis):
-    mat_rot = mathutils.Matrix.Rotation(math.radians(rotation_angle), 4, rotation_axis)
-    bone = bpy.context.active_object.pose.bones[bone_name]
-    bone.matrix = mat_rot
-    return bone.matrix
+    #bone = bpy.context.active_object.pose.bones[bone_name]
+    bpy.data.objects["Armature"].data.bones[bone_name].select = True
+    bpy.ops.transform.rotate(value=math.radians(rotation_angle), orient_axis=rotation_axis, orient_type='VIEW')
+    bpy.data.objects["Armature"].data.bones[bone_name].select = False
+    #bone.rotation_euler.rotate_axis(rotation_axis, math.radians(rotation_angle))
+    return
 
 # Method: get_matrix_bone(bone)"
 # Description: Get the matrix of properties including bone location, scale and rotation
@@ -23,6 +27,7 @@ def get_matrix_bone(bone_name):
     bpy.ops.object.mode_set(mode='POSE')
     bone = bpy.context.active_object.pose.bones[bone_name]
     bone_location, bone_rotation, bone_scale = bone.matrix_basis.decompose()
+    print(bone_rotation)
     rotation = bone.matrix_basis.to_quaternion()
     return rotation
 
@@ -36,14 +41,57 @@ def get_vertices_mesh(object_name):
     obj = bpy.context.active_object
     bm = bmesh.from_edit_mesh(obj.data)
     vertices = bm.verts
-    vert_list = []
+    vert_array = np.array([])
     for vert in vertices:
-        vert_list.insert(vert.index, vert.co.to_tuple())
+        vert_array = np.append(vert_array, np.array(vert.co))
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
-    return vert_list
+    return vert_array
 
-# Method: set_head_tail_postition(bone_name, head_position, tail_position)"
+
+# Method: transform_mesh(mesh_name, bone_name, head_position, tail_position)
+# Description: Merge the needed steps into one routine
+# Parameters:
+#    mesh_name: The mesh to access
+#    bones_array: Array that contains the bone names to be changed 
+#    angles_array: Array that contains the new angles for the bones
+# Returns: Mesh 3D vertices and its coordinates
+def transform_mesh(mesh_name, bones_array, angles_array): # THINK IN FUTURE ABOUT LENGTH OR SCALING!
+    set_bones(mesh_name, bones_array, angles_array)
+    mesh_vertices = get_vertices_mesh(mesh_name)
+    return mesh_vertices
+
+def set_bones(mesh_name, bones_array, angles_array):
+    bpy.ops.object.mode_set(mode='POSE')
+    angle_index=0
+    for bone_name in bones_array:
+        set_rotation(bone_name, angles_array[angle_index], 'X')
+        angle_index=angle_index+1
+        
+    
+    
+# ---------------------------------------------------------------------------------------------------------------------------
+#Testing how to access MESH vertices
+#print(get_vertices_mesh('Cylinder'))
+
+# Testing how to access Armature matrices
+#print(get_matrix_bone('Bone.001'))
+#print(get_matrix_bone('Bone'))
+#print(get_matrix_bone('Bone.002'))
+
+# Testing rotation of bone
+#set_rotation('Bone', 10,'X')
+#get_matrix_bone('Bone')
+
+array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
+array_of_angles = [10, 45, 10, 10, 10]
+transform_mesh('Cylinder', array_of_bone, array_of_angles)
+
+
+
+
+
+# Method: set_head_tail_postition(bone_name, head_position, tail_position)" ====================== NOT NEEDED FOR APPLICATION ======================
 # Description: Alter the head and tail positions of a bone
 # Parameters:
 #    bone_name: The bone to rotate
@@ -58,45 +106,3 @@ def set_head_tail_postition(bone_name, head_position, tail_position):
     bones[bone_name].head = (head_position[0], head_position [1], head_position[2])
     bones[bone_name].tail = (tail_position[0], tail_position [1], tail_position[2])
     return 
-
-# Method: transform_mesh(mesh_name, bone_name, head_position, tail_position)
-# Description: Merge the needed steps into one routine
-# Parameters:
-#    mesh_name: The mesh to access
-#    bone_name: The bone to rotate
-#    head_position: Array that contains 3D coordinates of head
-#    tail_position: Array that contains 3D coordinates of tail
-# Returns: Mesh 3D vertices and its coordinates
-def transform_mesh(mesh_name, bone_name, head_position, tail_position):
-    set_head_tail_postition(bone_name, head_position, tail-position)
-    mesh_vertices = get_vertices_mesh(mesh_name)
-    return mesh_vertices
-    
-# ---------------------------------------------------------------------------------------------------------------------------
-#Testing how to access MESH vertices
-print(get_vertices_mesh('Cylinder'))
-
-# Testing how to access Armature matrices
-print(get_matrix_bone('Bone.001'))
-print(get_matrix_bone('Bone'))
-print(get_matrix_bone('Bone.002'))
-
-# Testing rotation of bone
-set_rotation('Bone', 100,'X')
-
-# Testing setting of 
-#set_head_tail_postition('Bone', [0.5,0.1,0.2], [0.6,0.2, 0.3])
-
-
-# ---------------------------------------------------------------------------------------------------------------------------
-# INSTRUCTIONS
-# Lianne to create Python function, which: 
-# Inputs: 
-
-    # Joint positions (for each bone) 
-    # Deformed mesh (3D coordinates of vertices) 
-
-# Outputs (option B): 
-    # Deformed feature points (3D coordinates of corresponding vertices) 
-# Description: 
-    # The function calculates the mesh of the deformed model based on the joint parameters. It will be used in the optimization loop. 
