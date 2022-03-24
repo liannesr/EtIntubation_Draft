@@ -74,16 +74,33 @@ def set_bones(mesh_name, bones_array, angles_array):
     for bone_name in bones_array:
         set_rotation(bone_name, angles_array[angle_index], 'X')
         angle_index=angle_index+1
+    ret
         
-    
+# Method: "set_camera_position(new_x, new_y, new_z)"
+# Description: Changes camera position with respect to the position (0,0,0)
+# Parameters:
+#    new_x: The new x coordinate
+#    new_y: The new y coordinate 
+#    new_z: The new z coordinate
+# Returns: None
+def set_camera_position(new_x, new_y, new_z):
+    camera_location = bpy.data.objects['Camera'].location
+    camera_location.x = new_x
+    camera_location.y = new_y
+    camera_location.z = new_z
+    return
     
 # ---------------------------------------------------------------------------------------------------------------------------
-array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
-array_of_angles = [10, 45, 10, 10, 10]
-transform_mesh('Cylinder', array_of_bone, array_of_angles)
+#array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
+#array_of_angles = [10, 45, 10, 10, 10]
+#transform_mesh('Cylinder', array_of_bone, array_of_angles)
 # ---------------------------------------------------------------------------------------------------------------------------
 
-
+# ---------------------------------------------------------------------------------------------------------------------------
+#print(bpy.data.objects['Camera'].location)
+#set_camera_position(7.0,-6.0, 5.0)
+#print(bpy.data.objects['Camera'].location)
+# ---------------------------------------------------------------------------------------------------------------------------
 
 # Method: set_head_tail_postition(bone_name, head_position, tail_position)" ====================== NOT NEEDED FOR APPLICATION ======================
 # Description: Alter the head and tail positions of a bone
