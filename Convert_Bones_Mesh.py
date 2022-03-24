@@ -83,11 +83,15 @@ def set_bones(mesh_name, bones_array, angles_array):
 #    new_y: The new y coordinate 
 #    new_z: The new z coordinate
 # Returns: None
-def set_camera_position(new_x, new_y, new_z):
+def set_camera_position(new_x, new_y, new_z, x_orient, y_orient, z_orient):
     camera_location = bpy.data.objects['Camera'].location
     camera_location.x = new_x
     camera_location.y = new_y
     camera_location.z = new_z
+    camera_rotation = bpy.data.objects['Camera'].rotation_euler
+    camera_location.x = x_orient
+    camera_location.y = y_orient
+    camera_location.z = z_orient
     return
     
 # ---------------------------------------------------------------------------------------------------------------------------
@@ -98,8 +102,10 @@ def set_camera_position(new_x, new_y, new_z):
 
 # ---------------------------------------------------------------------------------------------------------------------------
 #print(bpy.data.objects['Camera'].location)
+#print(bpy.data.objects['Camera'].rotation_euler)
 #set_camera_position(7.0,-6.0, 5.0)
 #print(bpy.data.objects['Camera'].location)
+#print(bpy.data.objects['Camera'].rotation_euler)
 # ---------------------------------------------------------------------------------------------------------------------------
 
 # Method: set_head_tail_postition(bone_name, head_position, tail_position)" ====================== NOT NEEDED FOR APPLICATION ======================
