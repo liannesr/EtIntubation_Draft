@@ -1,125 +1,106 @@
-import bpy, os, bmesh, math, mathutils
-from bpy import context
+import bpy, bmesh
+import os, math, mathutils
 import numpy as np
+from bpy import context
+# import open3d
+from mathutils import Matrix
+from mathutils import Vector
+import statistics
+import csv
+import sys
+sys.path.insert(0, '/Users/liannesanchez/opt/miniconda3/lib/python3.7/site-packages/cv2')
+import cv2
+# sys.path.insert(0, '/opt/homebrew/lib/python3.9/site-packages/open3d')
+import open3d
+sys.path.insert(0, '/Users/liannesanchez/Desktop/')
+from Transformations import Transformations
+from Camera import Camera 
+from Image_Processing import Image_Processing
+from Solver import *
+import csv
 
-
-# Method: "set_rotation(bone, rotation_angle, rotation_axis)"
-# Description: Alter the rotation of bone over one axis.
-# Parameters:
-#    bone_name: The bone to rotate
-#    rotation_angle: The rotation angle
-#    rotation_axis: The roation axis
-# Returns: The matrix inserted into the bone
-def set_rotation(bone_name, rotation_angle, rotation_axis):
-    #bone = bpy.context.active_object.pose.bones[bone_name]
-    bpy.data.objects["Armature"].data.bones[bone_name].select = True
-    bpy.ops.transform.rotate(value=math.radians(rotation_angle), orient_axis=rotation_axis, orient_type='VIEW')
-    bpy.data.objects["Armature"].data.bones[bone_name].select = False
-    #bone.rotation_euler.rotate_axis(rotation_axis, math.radians(rotation_angle))
-    return
-
-# Method: "get_matrix_bone(bone)"
-# Description: Get the matrix of properties including bone location, scale and rotation
-# Parameter:
-#    bone: The bone to search 
-# Returns: The rotation quaternion that the bone currently has
-def get_matrix_bone(bone_name):
-    bpy.ops.object.mode_set(mode='POSE')
-    bone = bpy.context.active_object.pose.bones[bone_name]
-    bone_location, bone_rotation, bone_scale = bone.matrix_basis.decompose()
-    print(bone_rotation)
-    rotation = bone.matrix_basis.to_quaternion()
-    return rotation
-
-# Method: "get_vertices_mesh()"
-# Description: Get the mesh vertices and return its coordinates in tuple form, later can be accessed by index of vertex
-# Parameter: None
-# Returns: The rotation quaternion that the bone currently has
-def get_vertices_mesh(object_name):
-    bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-    bpy.ops.object.mode_set(mode='EDIT')
-    obj = bpy.context.active_object
-    bm = bmesh.from_edit_mesh(obj.data)
-    vertices = bm.verts
-    vert_array = np.array([])
-    for vert in vertices:
-        vert_array = np.append(vert_array, np.array(vert.co))
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
-    return vert_array
-
-
-# Method: "transform_mesh(mesh_name, bones_array, angles_array)"
-# Description: Merge the needed steps into one routine
-# Parameters:
-#    mesh_name: The mesh to access
-#    bones_array: Array that contains the bone names to be changed 
-#    angles_array: Array that contains the new angles for the bones
-# Returns: Mesh 3D vertices and its coordinates
-def transform_mesh(mesh_name, bones_array, angles_array): # THINK IN FUTURE ABOUT LENGTH OR SCALING!
-    set_bones(mesh_name, bones_array, angles_array)
-    mesh_vertices = get_vertices_mesh(mesh_name)
-    return mesh_vertices
-
-# Method: "set_bones(mesh_name, bones_array, angles_array)"
-# Description: Traverses through the bone array to set the rotations (transform) for each bone
-# Parameters:
-#    mesh_name: The mesh to access
-#    bones_array: Array that contains the bone names to be changed 
-#    angles_array: Array that contains the new angles for the bones
-# Returns: None
-def set_bones(mesh_name, bones_array, angles_array):
-    bpy.ops.object.mode_set(mode='POSE')
-    angle_index=0
-    for bone_name in bones_array:
-        set_rotation(bone_name, angles_array[angle_index], 'X')
-        angle_index=angle_index+1
-    ret
-        
-# Method: "set_camera_position(new_x, new_y, new_z)"
-# Description: Changes camera position with respect to the position (0,0,0)
-# Parameters:
-#    new_x: The new x coordinate
-#    new_y: The new y coordinate 
-#    new_z: The new z coordinate
-# Returns: None
-def set_camera_position(new_x, new_y, new_z, x_orient, y_orient, z_orient):
-    camera_location = bpy.data.objects['Camera'].location
-    camera_location.x = new_x
-    camera_location.y = new_y
-    camera_location.z = new_z
-    camera_rotation = bpy.data.objects['Camera'].rotation_euler
-    camera_location.x = x_orient
-    camera_location.y = y_orient
-    camera_location.z = z_orient
-    return
-    
+from scipy.optimize import least_squares
+# ------------------------------- TESTING TRANSFORMATION CLASS --------------------------------------------------------------
+# array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
+# array_of_angles = [0, 0, 45, 0, 0]
+# Transformations.transform_mesh('Cylinder', array_of_bone, array_of_angles)
 # ---------------------------------------------------------------------------------------------------------------------------
-#array_of_bone = ['Bone', 'Bone.001','Bone.002' ,'Bone.003', 'Bone.004']
-#array_of_angles = [10, 45, 10, 10, 10]
-#transform_mesh('Cylinder', array_of_bone, array_of_angles)
+#Vector((7.358891487121582, -6.925790786743164, 4.958309173583984))
+#Euler((0.0, -0.0, 0.0), 'XYZ')
+# ----------------------------------- TESTING CAMERA CLASS ------------------------------------------------------------------
+# print(bpy.data.objects['Camera'].location)
+# # print(bpy.data.objects['Camera'].rotation_euler)
+# set_camera_position(3.0,-3.0, 3.0, 0.0, 0.0, 0.0)
+# print(bpy.data.objects['Camera'].location)
+# print(bpy.data.objects['Camera'].rotation_euler)
+
+# area = next(area for area in bpy.context.screen.areas if area.type == 'VIEW_3D')
+# area.spaces[0].region_3d.view_perspective = 'PERSP'
 # ---------------------------------------------------------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------------------------------------------------------
-#print(bpy.data.objects['Camera'].location)
-#print(bpy.data.objects['Camera'].rotation_euler)
-#set_camera_position(7.0,-6.0, 5.0)
-#print(bpy.data.objects['Camera'].location)
-#print(bpy.data.objects['Camera'].rotation_euler)
+# ----------------------------------- TESTING COMPUTER VISION CLASS ---------------------------------------------------------
+# cam = bpy.data.objects['Camera'].data
+# print(Camera.get_calibration_matrix(cam))
+# print(Camera.get_extrinsic_matrix(bpy.data.objects['Camera']))
 # ---------------------------------------------------------------------------------------------------------------------------
 
-# Method: set_head_tail_postition(bone_name, head_position, tail_position)" ====================== NOT NEEDED FOR APPLICATION ======================
-# Description: Alter the head and tail positions of a bone
-# Parameters:
-#    bone_name: The bone to rotate
-#    head_position: Array that contains 3D coordinates of head
-#    tail_position: Array that contains 3D coordinates of tail
-# Returns: Nothing
-def set_head_tail_postition(bone_name, head_position, tail_position):
-    bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
-    bpy.ops.object.mode_set(mode='EDIT')
-    obj = bpy.context.edit_object
-    bones = obj.data.edit_bones
-    bones[bone_name].head = (head_position[0], head_position [1], head_position[2])
-    bones[bone_name].tail = (tail_position[0], tail_position [1], tail_position[2])
-    return 
+# ----------------------------------- TESTING IMAGE PROCESSING CLASS ---------------------------------------------------------
+# image = Image_Processing('trim_test.png')
+# Image_Processing.mask_image(image)
+# print(Image_Processing.find_circles_coor(image))
+# ---------------------------------------------------------------------------------------------------------------------------
+
+
+# TESTING FOR OPEN 3D
+# sys.path.insert(0, '/Users/liannesanchez/opt/miniconda3/lib/python3.7/site-packages/open3d/')
+
+# mesh = bpy.data.objects['Airway project model.001'].data
+# mesh.calc_loop_triangles()
+# triangles = mesh.loop_triangles
+# vertices = mesh.vertices
+
+# print("Computing normal and rendering it.")
+# mesh.compute_vertex_normals()
+# print(np.asarray(mesh.triangle_normals))
+# draw_geometries([mesh])
+
+# bpy.ops.render.opengl()
+# bpy.ops.render.opengl('INVOKE_DEFAULT')
+# bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer='', scene='')
+# bpy.ops.render.view_show('INVOKE_DEFAULT')
+
+
+
+# fields = []
+# rows = []
+# with open('CollectedData_Sanjeev.csv', 'r') as csvfile:
+#     csvreader = csv.reader(csvfile)
+     
+#     # extracting field names through first row
+#     fields = next(csvreader)
+ 
+#     # extracting each data row one by one
+#     for row in csvreader:
+#         rows.append(row)
+
+ 
+# coordinates = []
+# for column in rows[5][3::]:
+#     coordinates.append(float(column))
+
+# coordinates_vector= np. reshape(coordinates, (16, 2))
+# # print(coordinates_vector)
+# undistorted = Image_Processing.undistort_image(coordinates_vector)
+
+initial_parameters = [ 0.34419, -1.5999, 14.04, 5.52, - 1.16 ,-180+180]
+#residuals = Solver.optimize( [ 0.40419, -1.6299, 14.51, 5.52, - 0.959 ,-180])
+res_1 = least_squares(optimize, initial_parameters)
+print("Resulting optimized parameters: ", res_1.x)
+print("Cost: ", res_1.cost)
+print("Optimality: ", res_1.optimality)
+# print("Sum of residuals: ", np.sum(res_1.x))
+# print("Average of residuals: ", np.average(res_1.x))
+# Solver.caller_fun(coordinates_vector)
+# Camera.get_camera_angles()
+# Camera.get_camera_loc()
+
